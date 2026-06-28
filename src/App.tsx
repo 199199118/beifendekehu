@@ -178,9 +178,8 @@ function LoginPage() {
             </button>
           </div>
 
-          <div className="mt-6 text-center text-sm text-slate-500">
-            <p>默认账号: admin</p>
-            <p>默认密码: asdasd123</p>
+          <div className="mt-6 text-center text-xs text-slate-600">
+            <p>本应用仅供授权用户使用</p>
           </div>
         </div>
       </div>
