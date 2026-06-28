@@ -45,3 +45,5 @@ npm run build
 ## 📝 许可证
 
 MIT License
+
+_Last verified by automated CI on 2026-06-28._
