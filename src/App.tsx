@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { loadCustomers, saveCustomers } from "./store";
 
 // ========== 认证配置 ==========
 const AUTH_CONFIG = {
@@ -226,14 +227,40 @@ function MainApp() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string>("");
 
+  // 启动时拉一次
   useEffect(() => {
-    const saved = localStorage.getItem("customers");
-    if (saved) try { setCustomers(JSON.parse(saved)); } catch {}
+    let stale = false;
+    (async () => {
+      const r = await loadCustomers();
+      if (!stale) {
+        setCustomers(r.customers);
+        if (!r.ok) {
+          msg(`读取数据失败: ${r.error}（首次可能 5-10 秒后会下载）`, "error");
+        } else if (r.customers.length) {
+          msg(`已从云端同步 ${r.customers.length} 客户`, "success");
+        }
+      }
+    })();
+    return () => { stale = true; };
   }, []);
 
+  // 改变就同步写云端
   useEffect(() => {
-    localStorage.setItem("customers", JSON.stringify(customers));
+    if (!lastSavedAt) return;  // 首次跳过
+    setSyncing(true);
+    const t = setTimeout(async () => {
+      const r = await saveCustomers(customers);
+      setSyncing(false);
+      if (r.ok) {
+        setLastSavedAt(new Date().toLocaleTimeString("zh-CN"));
+      } else {
+        msg(`同步失败: ${r.error}`, "error");
+      }
+    }, 600);
+    return () => clearTimeout(t);
   }, [customers]);
 
   useEffect(() => {
@@ -261,7 +288,7 @@ function MainApp() {
     setNewId("");
     setNewName("");
     setSidebarOpen(false);
-    msg("客户添加成功", "success");
+    msg("客户添加成功 - 正在同步到云端", "success");
   };
 
   const deleteCustomer = (id: string) => {
@@ -440,6 +467,11 @@ function MainApp() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-400">{customers.length} 客户 · {totalEntries} 记录</span>
+          {syncing ? (
+            <span className="text-xs text-amber-400">⏳ 同步中…</span>
+          ) : lastSavedAt ? (
+            <span className="text-xs text-emerald-400">✓ 已同步 {lastSavedAt}</span>
+          ) : null}
           <button onClick={logout} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg border border-white/15 transition-all flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
