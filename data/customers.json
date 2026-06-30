@@ -1,15 +1,1 @@
-[
-  {
-    "id": "TEST001",
-    "name": "老大-验证客户",
-    "entries": [
-      {
-        "id": "test-entry-1",
-        "type": "order",
-        "content": "这是从云端写入的测试记录",
-        "createdAt": "2026-06-29 21:00"
-      }
-    ],
-    "createdAt": "2026-06-29 21:00"
-  }
-]
+[]
