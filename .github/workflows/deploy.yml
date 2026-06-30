@@ -31,6 +31,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_GH_TOKEN: ${{ secrets.VITE_GH_TOKEN }}
         run: npm run build
 
       - name: Setup Pages
